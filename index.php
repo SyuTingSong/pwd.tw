@@ -110,7 +110,7 @@ if($host == 'pwd.tw') {
         $e = $pdo->errorInfo();
         die($e[2]);
     }
-    echo $short;
+    require("short.php");
 } else {
     $p = stripos($host, '.pwd.tw');
     if($p === false) {
@@ -129,7 +129,6 @@ if($host == 'pwd.tw') {
     }
     header('HTTP/1.1 301 Moved Permanently');
     header('Location: '.$target);
+	require("jump.php");
 }
-
-
 

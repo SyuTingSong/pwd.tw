@@ -97,7 +97,7 @@ $pdo = new PDO(
     'RYMP2CNbY8RAUazQ'
 );
 $host = $_SERVER['HTTP_HOST'];
-if($host == 'pwd.tw') {
+if($host == 'pwd.tw' || $host == 'c.pwd.tw') {
     $uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
     if($uri == '/') {
         require('index.html');
@@ -110,7 +110,12 @@ if($host == 'pwd.tw') {
         $e = $pdo->errorInfo();
         die($e[2]);
     }
-    require("short.php");
+    if($host == 'pwd.tw') {
+        require("short.php");
+    } else {
+        header("Content-Type: text/plain");
+        echo $short;
+    }
 } else {
     $p = stripos($host, '.pwd.tw');
     if($p === false) {

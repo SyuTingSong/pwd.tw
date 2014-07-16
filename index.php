@@ -97,13 +97,13 @@ $pdo = new PDO(
     'RYMP2CNbY8RAUazQ'
 );
 $host = $_SERVER['HTTP_HOST'];
-if($host == 'pwd.tw' || $host == 'c.pwd.tw') {
+if(in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
     $uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
     if($uri == '/') {
         require('index.html');
         die();
     }
-    $url = substr($uri, 1);
+    $url = $host == 'u.pwd.tw'?$_GET['u']:substr($uri, 1);
     $short = pwd_save($pdo, $url);
     if($short === false) {
         header('HTTP/1.1 500 Internal Error');
@@ -136,4 +136,3 @@ if($host == 'pwd.tw' || $host == 'c.pwd.tw') {
     header('Location: '.$target);
 	require("jump.php");
 }
-

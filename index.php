@@ -110,7 +110,7 @@ if(in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
         $e = $pdo->errorInfo();
         die($e[2]);
     }
-    if($host == 'pwd.tw') {
+    if($host != 'c.pwd.tw') {
         require("short.php");
     } else {
         header("Content-Type: text/plain");

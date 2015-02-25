@@ -5,17 +5,17 @@
  * @return string
  */
 function pwd_save($db, $url) {
-    if(strpos($url, 'http://') !== 0 && strpos($url, 'https://') !== 0)
-        $url = 'http://'.$url;
+    if (strpos($url, 'http://') !== 0 && strpos($url, 'https://') !== 0)
+        $url = 'http://' . $url;
     $hash = sha1($url);
     $st = $db->prepare('INSERT INTO link (hash, url) VALUES (:hash, :url)');
     $st->bindValue(':hash', $hash, PDO::PARAM_STR);
     $st->bindValue(':url', $url, PDO::PARAM_STR);
-    if($st->execute()) {
+    if ($st->execute()) {
         $id = $db->lastInsertId();
     } else {
         $e = $st->errorInfo();
-        if($e[1] == 1062) {
+        if ($e[1] == 1062) {
             $st = $db->query("SELECT id FROM link WHERE hash='$hash'");
             $id = $st->fetchColumn();
         } else {
@@ -33,7 +33,7 @@ function pwd_save($db, $url) {
  * @return string
  */
 function pwd_load($db, $key) {
-    if($url = xcache_get($key)) {
+    if ($url = xcache_get($key)) {
         header('X-Cache-Hit: 1');
         return $url;
     } else {
@@ -43,7 +43,7 @@ function pwd_load($db, $key) {
     $st = $db->prepare('SELECT * FROM link WHERE id=:id');
     $st->bindValue(':id', $id, PDO::PARAM_INT);
     $st->execute();
-    if($r = $st->fetch(PDO::FETCH_ASSOC)) {
+    if ($r = $st->fetch(PDO::FETCH_ASSOC)) {
         xcache_set($key, $r['url'], 86400);
         return $r['url'];
     } else {
@@ -66,7 +66,7 @@ function int2pk($int) {
     $len = strlen($o);
     $char = '.';
     $pk = '';
-    for($i = 0; $i < $len; $i++) {
+    for ($i = 0; $i < $len; $i++) {
         $char = $map[$char][intval($o[$i])];
         $pk .= $char;
     }
@@ -82,7 +82,7 @@ function pk2int($pk) {
     $len = strlen($pk);
     $char = '.';
     $o = '';
-    for($i = 0; $i < $len; $i++) {
+    for ($i = 0; $i < $len; $i++) {
         $o .= strpos($map[$char], $pk[$i]);
         $char = $pk[$i];
     }
@@ -97,20 +97,20 @@ $pdo = new PDO(
     'RYMP2CNbY8RAUazQ'
 );
 $host = $_SERVER['HTTP_HOST'];
-if(in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
-    $uri = isset($_SERVER['REQUEST_URI'])?$_SERVER['REQUEST_URI']:'';
-    if($uri == '/') {
+if (in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
+    $uri = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    if ($uri == '/') {
         require('index.html');
         die();
     }
-    $url = $host == 'u.pwd.tw'?$_GET['u']:substr($uri, 1);
+    $url = $host == 'u.pwd.tw' ? $_GET['u'] : substr($uri, 1);
     $short = pwd_save($pdo, $url);
-    if($short === false) {
+    if ($short === false) {
         header('HTTP/1.1 500 Internal Error');
         $e = $pdo->errorInfo();
         die($e[2]);
     }
-    if($host != 'c.pwd.tw') {
+    if ($host != 'c.pwd.tw') {
         require("short.php");
     } else {
         header("Content-Type: text/plain");
@@ -118,21 +118,21 @@ if(in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
     }
 } else {
     $p = stripos($host, '.pwd.tw');
-    if($p === false) {
+    if ($p === false) {
         header('HTTP/1.1 404 Not Found');
         die('Not Found');
     }
     $key = substr($host, 0, $p);
-    if(!preg_match('#^[.adgjmptw]+$#', $key)) {
+    if (!preg_match('#^[.adgjmptw]+$#', $key)) {
         header('HTTP/1.1 400 Bad Request');
         die('Bad Request');
     }
     $target = pwd_load($pdo, $key);
-    if($target === false) {
+    if ($target === false) {
         header('HTTP/1.1 404 Not Found');
         die('Not Found');
     }
     header('HTTP/1.1 301 Moved Permanently');
-    header('Location: '.$target);
-	require("jump.php");
+    header('Location: ' . $target);
+    require("jump.php");
 }

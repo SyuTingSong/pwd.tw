@@ -26,7 +26,7 @@ $url_pattern = '_^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@)?(?:(?!10(?:\.\d{1,3}){3
 /**
  * @param PDO $db
  * @param string $url
- * @return string
+ * @return array
  */
 function pwd_save($db, $url) {
     $hash = sha1($url);
@@ -35,39 +35,38 @@ function pwd_save($db, $url) {
     $st->bindValue(':url', $url, PDO::PARAM_STR);
     if ($st->execute()) {
         $id = $db->lastInsertId();
+        $visit = 0;
     } else {
         $e = $st->errorInfo();
         if ($e[1] == 1062) {
-            $st = $db->query("SELECT id FROM link WHERE hash='$hash'");
-            $id = $st->fetchColumn();
+            $st = $db->query("SELECT id, visit FROM link WHERE hash='$hash'");
+            $r = $st->fetch(PDO::FETCH_ASSOC);
+            $id = $r['id'];
+            $visit = $r['visit'];
         } else {
             return false;
         }
     }
     $key = int2pk($id);
-    xcache_set($key, $url, 86400);
-    return "http://{$key}.pwd.tw/";
+    return ['url' => "http://{$key}.pwd.tw/", 'visit' => $visit];
 }
 
 /**
  * @param PDO $db
  * @param string $key
- * @return string
+ * @return array
  */
 function pwd_load($db, $key) {
-    if ($url = xcache_get($key)) {
-        header('X-Cache-Hit: 1');
-        return $url;
-    } else {
-        header('X-Cache-Hit: 0');
-    }
     $id = pk2int($key);
+    $st = $db->prepare("UPDATE link SET visit=visit+1 WHERE id=:id");
+    $st->bindValue(':id', pk2int($key), PDO::PARAM_INT);
+    $st->execute();
     $st = $db->prepare('SELECT * FROM link WHERE id=:id');
     $st->bindValue(':id', $id, PDO::PARAM_INT);
     $st->execute();
+
     if ($r = $st->fetch(PDO::FETCH_ASSOC)) {
-        xcache_set($key, $r['url'], 86400);
-        return $r['url'];
+        return $r;
     } else {
         return false;
     }
@@ -177,7 +176,7 @@ if (in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
         require("short.php");
     } else {
         header("Content-Type: text/plain");
-        echo $short;
+        echo $short['url'];
     }
 } else {
     $p = stripos($host, '.pwd.tw');
@@ -195,7 +194,8 @@ if (in_array($host, array('pwd.tw', 'c.pwd.tw', 'u.pwd.tw'))) {
         header('HTTP/1.1 404 Not Found');
         die('Not Found');
     }
+
     header('HTTP/1.1 301 Moved Permanently');
-    header('Location: ' . $target);
+    header('Location: ' . $target['url']);
     require("jump.php");
 }
